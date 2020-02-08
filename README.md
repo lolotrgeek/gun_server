@@ -8,3 +8,5 @@ https://gun.eco/docs/Todo-Dapp#step=Deploy
 ```
 node server
 ```
+## Todo
+- create truth node for backups that does not accept `null` values

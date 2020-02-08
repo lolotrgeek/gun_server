@@ -1,4 +1,14 @@
-const dag = require('../dag')
+const store = require('../store')
 
-const test = dag.getAll(value => value.type === 'mine' ? true : false)
-console.log(test)
+const validator = value => value.type === 'mine' ? true : false;
+
+(async () => {
+    try {
+        let all = await store.getAll()
+        console.log(all)
+        process.exit()
+    } catch(err) {
+        console.error(err)
+        process.exit()
+    }
+})()

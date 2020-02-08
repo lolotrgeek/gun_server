@@ -1,21 +1,11 @@
 // import 'gun-asyncstorage'
 // import Gun from 'gun/gun.js'
+
 const Gun = require('gun')
 const port = '8765'
 const address = '192.168.1.109'
 // const gun = new Gun(`http://${address}:${port}`)
 const gun = Gun([`http://${address}:${port}`])
-
-// Items -> key -> value
-
-// storing
-// Items -> uniqueIdKey -> {key : newitemKey, timestamp : 123 , value : value '{...}' }
-
-// updating
-// Items -> uniqueIdKey ->  {key : givenitemKey, timestamp : 123, value : '{...}'}
-
-// finding 
-// Items -> map() -> filter(value.key === givenitemKey)
 
 /**
  * Add key value pair to graph
@@ -24,12 +14,13 @@ const gun = Gun([`http://${address}:${port}`])
  */
 function storeItem(item) {
     return new Promise((resolve, reject) => {
+        if (typeof item[1] !== 'object') return item
         let key = item[0]
-        let value = item[1]
-        const entries = gun.get('Items').get(key)
-        const entry = gun.get(Date.now().toString())
-        entry.put(value)
-        entries.set(entry)
+        let value = JSON.stringify(item[1])
+        gun.get('Items').get(key).put(value, (ack) => {
+            if (ack.err) reject(ack.err)
+            else resolve(item)
+        })
     })
 
 }
@@ -85,8 +76,7 @@ const removeItem = async key => {
  * Run validator against result
  * @param {*} result 
  * @param {*} validator
- * @todo check for bad validator
- * @todo could run this within gun.map() filter 
+ * @todo check for bad validator 
  */
 const storeMap = (result, validator) => {
     let key = result[0]
@@ -101,30 +91,39 @@ const storeMap = (result, validator) => {
     else return false
 }
 
-
 /**
- * Get all Items from Gun Store, including immutable sets
+ * Get all Items from Gun Store 
  * @param {boolean} [validator] (key, value) critera for each item to pass
  */
-const getAll = () => {
-    gun.get('Items').map().once((value, key) => {
-        console.log(key, value)
-        gun.get('Items').get(key, ack =>{
-            console.log(ack)
+const getAll = validator => {
+    return new Promise(async (resolve, reject) => {
+        let results = []
+        await gun.get('Items').map().once((value, key) => {
+            return new Promise((resolve, reject) => { resolve(results.push([key, value])) })
         })
-        // return new Promise((resolve, reject) => { resolve([key, value]) })
+        if (!validator) resolve(results)
+        else resolve(results.map(result => storeMap(result, validator)).filter(result => result))
     })
 }
+
 /**
  * Delete entire Gun Store
  */
-exports.removeAll = async () => {
+const removeAll = () => {
     return new Promise(async (resolve, reject) => {
-        await gun.get('Items').map().once(async (value, key) => {
-            return new Promise((resolve, reject) => {
-                resolve(gun.get('Item').get(key).put(null))
+        let done = []
+        await gun.get('Items').map().once((value, key) => {
+            return new Promise(async (resolve, reject) => {
+                await gun.get('Items').get(key).put(null, ack => {
+                    return new Promise((resolve, reject) => {
+                        console.log(`removing ${key}`)
+                        ack.err ? reject(ack.err) : resolve(done.push(key))
+                    })
+                })
+                resolve(done)
             })
         })
+        resolve(done)
     })
 }
 
@@ -132,5 +131,8 @@ module.exports = {
     getAll: getAll,
     storeItem: storeItem,
     getItem: getItem,
-    getValue: getValue
+    getValue: getValue,
+    removeAll: removeAll,
+    removeItem : removeItem
+
 }

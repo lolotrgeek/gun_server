@@ -1,4 +1,4 @@
-const dag = require('../dag')
+const store = require('../store')
 const Hashids = require('hashids/cjs')
 const hashids = new Hashids()
 
@@ -8,15 +8,17 @@ const value = {
     created: new Date().toDateString(),
     type: 'yours'
 }
+const staticItem = ['findme', {created: new Date().toDateString(), type: 'mine'}]
 const item = [key, value];
 
 (async () => {
     try {
-        // await dag.storeItem(item)
-        let validator = value => value.type === 'mine' ? true : false
-        let all = await dag.getAll(validator)
+        await store.storeItem(item)
+        await store.storeItem(staticItem)
+        let validator = value => value.type === 'yours' ? true : false
+        let all = await store.getAll(validator)
         console.log(all)
-        const one = await dag.getItem('q7JOD2JMy')
+        const one = await store.getItem('findme')
         console.log(one)
         process.exit()
     } catch (err) {
@@ -24,5 +26,3 @@ const item = [key, value];
         process.exit()
     }
 })()
-
-dag._getAll()
