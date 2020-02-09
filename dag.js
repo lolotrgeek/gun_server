@@ -6,16 +6,6 @@ const address = '192.168.1.109'
 // const gun = new Gun(`http://${address}:${port}`)
 const gun = Gun([`http://${address}:${port}`])
 
-// Items -> key -> value
-
-// storing
-// Items -> uniqueIdKey -> {key : newitemKey, timestamp : 123 , value : value '{...}' }
-
-// updating
-// Items -> uniqueIdKey ->  {key : givenitemKey, timestamp : 123, value : '{...}'}
-
-// finding 
-// Items -> map() -> filter(value.key === givenitemKey)
 
 /**
  * Add key value pair to graph
@@ -26,42 +16,40 @@ function storeItem(item) {
     return new Promise((resolve, reject) => {
         let key = item[0]
         let value = item[1]
-        const entries = gun.get('Items').get(key)
-        const entry = gun.get(Date.now().toString())
-        entry.put(value)
-        entries.set(entry)
-    })
+        gun.get('Items').get(key).set(value, ack => {
+            ack.err ? reject(ack.err) : resolve([key, value])
+        })
 
+
+    })
 }
 /**
- * retrieve item key, value pair from graph
+ * retrieve last item from entry graph
  * @param {Array} id 
  */
 function getItem(id) {
     return new Promise((resolve, reject) => {
-        gun.get('Items').get(id, (ack) => {
-            if (ack.err) { reject(ack.err) }
-            else if (!ack.put) { reject(`Nothing Found for id : ${id}`) }
-            else { resolve([id, ack.put]) }
+        gun.get('Items').get(id).map().once((data, key) => {
+            if (!data) reject(`${data} is not here.`)
+            resolve([key, data])
         })
-
     })
 }
 
 /**
- * retrieve value from graph
+ * retrieve all items from entry graph
  * @param {Array} id 
  */
-function getValue(id) {
-    return new Promise((resolve, reject) => {
-        gun.get('Items').get(id, (ack) => {
-            if (ack.err) { reject(ack.err) }
-            else if (!ack.put) { reject(`Nothing Found for id : ${id}`) }
-            else { resolve(ack.put) }
+async function getItems(id) {
+    let results = []
+    await gun.get('Items').get(id).map().on((data, key) => {
+        new Promise((resolve, reject) => {
+            if (!data) reject(`${data} is not here.`)
+            resolve(results.push(data))
         })
     })
+    return Promise.all(results)
 }
-
 /**
  * Update existing key with given value
  * @param {Array} item [key, value]
@@ -74,7 +62,7 @@ exports.updateItem = async item => storeItem(item)
  */
 const removeItem = async key => {
     return new Promise((resolve, reject) => {
-        gun.get('Items').get(key).put(null, (ack) => {
+        gun.get('Items').get(key).set(null, (ack) => {
             if (ack.err) reject(ack.err)
             else resolve(key)
         })
@@ -106,15 +94,17 @@ const storeMap = (result, validator) => {
  * Get all Items from Gun Store, including immutable sets
  * @param {boolean} [validator] (key, value) critera for each item to pass
  */
-const getAll = () => {
-    gun.get('Items').map().once((value, key) => {
-        console.log(key, value)
-        gun.get('Items').get(key, ack =>{
-            console.log(ack)
+const getAll = async () => {
+    let results = []
+    await gun.get('Items').map().once((value, key) => {
+        console.log(key)
+        new Promise((resolve, reject) => {
+            resolve(results.push([key, value]))
         })
-        // return new Promise((resolve, reject) => { resolve([key, value]) })
     })
+    return Promise.all(results)
 }
+
 /**
  * Delete entire Gun Store
  */
@@ -132,5 +122,5 @@ module.exports = {
     getAll: getAll,
     storeItem: storeItem,
     getItem: getItem,
-    getValue: getValue
+    getItems: getItems,
 }
