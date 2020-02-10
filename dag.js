@@ -2,7 +2,7 @@
 // import Gun from 'gun/gun.js'
 const Gun = require('gun')
 const port = '8765'
-const address = '192.168.1.109'
+const address = 'localhost'
 // const gun = new Gun(`http://${address}:${port}`)
 const gun = Gun([`http://${address}:${port}`])
 
@@ -91,22 +91,39 @@ const storeMap = (result, validator) => {
 
 
 /**
+ * Get all Keys from Gun Store
+ * @param {boolean} [validator] (key, value) critera for each item to pass
+ */
+const getKeys = async () => {
+    let keys = []
+    await gun.get('Items').map().once((value, key) => {
+        console.log(key)
+        new Promise(async (resolve, reject) => {
+            if (!key) reject('no key')
+            resolve(keys.push(key))
+        })
+    })
+    return Promise.all(keys)
+}
+
+/**
  * Get all Items from Gun Store, including immutable sets
  * @param {boolean} [validator] (key, value) critera for each item to pass
  */
 const getAll = async () => {
     let results = []
-    await gun.get('Items').map().once((value, key) => {
-        console.log(key)
-        new Promise((resolve, reject) => {
-            resolve(results.push([key, value]))
-        })
+    let keys = await getKeys()
+    if (!Array.isArray(keys)) return ('invalid keys')
+    await keys.map( key => {
+        let result = getItem(key)
+        results.push(result)
     })
     return Promise.all(results)
 }
 
+
 /**
- * Delete entire Gun Store
+ * Nullify entire Gun Store
  */
 exports.removeAll = async () => {
     return new Promise(async (resolve, reject) => {

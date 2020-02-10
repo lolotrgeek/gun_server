@@ -3,7 +3,7 @@
 
 const Gun = require('gun')
 const port = '8765'
-const address = '192.168.1.109'
+const address = 'localhost'
 // const gun = new Gun(`http://${address}:${port}`)
 const gun = Gun([`http://${address}:${port}`])
 

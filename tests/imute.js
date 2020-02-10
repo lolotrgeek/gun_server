@@ -4,24 +4,48 @@ const dag = require('../dag')
 
 const key = hashids.encode(Date.now())
 const value = {
-    important: 'last thing',
+    name: 'try_mutable',
+    time: Date.now(),
     created: new Date().toDateString(),
     type: 'yours'
 }
-const staticItem = [
-    'findme',
-    { created: new Date().toDateString(), type: 'mine' }
-]
-const item = ['mOBA8B9xO', value];
+const first = {
+    name: 'first thing',
+    time: Date.now(),
+    created: new Date().toDateString(),
+    type: 'mine'
+}
+const middle = {
+    name: 'second thing',
+    time: Date.now(),
+    created: new Date().toDateString(),
+    type: 'mine'
+}
+const last = {
+    name: 'last thing',
+    time: Date.now(),
+    created: new Date().toDateString(),
+    type: 'mine'
+}
+const items = [[key, value], ['mOBA8B9xO', first], ['mOBA8B9xO', middle], ['mOBA8B9xO', last]];
+
+const populate = async () => {
+    await items.map(async item => {
+        try { await dag.storeItem(item) }
+        catch (error) { console.error(error) }
+    })
+}
+populate();
 
 (async () => {
     try {
-        let store = await dag.storeItem(item)
-        console.log(store)
-        let retrieve = await dag.getItem('mOBA8B9xO')
-        console.log(retrieve)
-        // let all = await dag.getAll()
-        // console.log(all)
+        let last_item = await dag.getItem('mOBA8B9xO')
+        console.log(last_item)
+        let history = await dag.getItems('mOBA8B9xO')
+        console.log(history)
+        let all = await dag.getAll()
+        console.log(all)
+
         process.exit()
     } catch (error) {
         console.error(error)
