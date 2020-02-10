@@ -35,21 +35,35 @@ const populate = async () => {
         catch (error) { console.error(error) }
     })
 }
-populate();
+// populate()
 
-(async () => {
+const check = (stored, declared) => {
+    let checked = {}
+    checked.name = stored.name === declared.name ? true : false
+    checked.time = stored.time === declared.time ? true : false
+    checked.created = stored.created === declared.created ? true : false
+    checked.type = stored.type === declared.type ? true : false
+}
+
+const testRunner = async (tests) => {
     try {
-        let last_item = await dag.getItem('mOBA8B9xO')
-        console.log(last_item)
-        let history = await dag.getItems('mOBA8B9xO')
-        console.log(history)
-        let all = await dag.getAll()
-        console.log(all)
-
+        for (const test of tests) {
+            let result = await test()
+            console.log(result)
+        }
         process.exit()
     } catch (error) {
         console.error(error)
         process.exit()
     }
+}
 
-})()
+const storeItemTest = async () => dag.storeItem([key, value])
+const getItemTest = async () => dag.getItem('mOBA8B9xO')
+const getItemsTest = async () => dag.getItems('mOBA8B9xO')
+const getAllTest = async () => dag.getAll()
+const getKeysTest = async () => dag.getKeys()
+
+
+// testRunner([getKeysTest])
+testRunner([getAllTest])

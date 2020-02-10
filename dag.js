@@ -6,6 +6,13 @@ const address = 'localhost'
 // const gun = new Gun(`http://${address}:${port}`)
 const gun = Gun([`http://${address}:${port}`])
 
+const trimSoul = item => {
+    let soul = item['_']
+    if(!soul || typeof soul !== 'object') return item
+    delete soul
+    console.log(item)
+    return item
+}
 
 /**
  * Add key value pair to graph
@@ -31,7 +38,7 @@ function getItem(id) {
     return new Promise((resolve, reject) => {
         gun.get('Items').get(id).map().once((data, key) => {
             if (!data) reject(`${data} is not here.`)
-            resolve([key, data])
+            resolve([id, data])
         })
     })
 }
@@ -96,8 +103,7 @@ const storeMap = (result, validator) => {
  */
 const getKeys = async () => {
     let keys = []
-    await gun.get('Items').map().once((value, key) => {
-        console.log(key)
+    await gun.get('Items').map().on((value, key) => {
         new Promise(async (resolve, reject) => {
             if (!key) reject('no key')
             resolve(keys.push(key))
@@ -115,8 +121,7 @@ const getAll = async () => {
     let keys = await getKeys()
     if (!Array.isArray(keys)) return ('invalid keys')
     await keys.map( key => {
-        let result = getItem(key)
-        results.push(result)
+        results.push(getItem(key))
     })
     return Promise.all(results)
 }
@@ -140,4 +145,5 @@ module.exports = {
     storeItem: storeItem,
     getItem: getItem,
     getItems: getItems,
+    getKeys: getKeys
 }
