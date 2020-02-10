@@ -6,30 +6,32 @@ const address = 'localhost'
 // const gun = new Gun(`http://${address}:${port}`)
 const gun = Gun([`http://${address}:${port}`])
 
-const trimSoul = item => {
-    let soul = item['_']
-    if(!soul || typeof soul !== 'object') return item
-    delete soul
-    console.log(item)
-    return item
-}
+
 
 /**
  * Add key value pair to graph
- * @param {Array} item [key, value]
+ * @param {Array} item `[key, value]`
+ * 
  * @todo decouple validation
  */
 function storeItem(item) {
     return new Promise((resolve, reject) => {
-        let key = item[0]
-        let value = item[1]
-        gun.get('Items').get(key).set(value, ack => {
-            ack.err ? reject(ack.err) : resolve([key, value])
+        gun.get('Items').get(item[0]).set(item[1], ack => {
+            ack.err ? reject(ack.err) : resolve(item)
         })
-
-
     })
 }
+
+/**
+ * removes soul from given data
+ * @param {*} data 
+ */
+const trimSoul = data => {
+    if (!data || !data['_'] || typeof data['_'] !== 'object') return data
+    delete data['_']
+    return data
+}
+
 /**
  * retrieve last item from entry graph
  * @param {Array} id 
@@ -38,7 +40,7 @@ function getItem(id) {
     return new Promise((resolve, reject) => {
         gun.get('Items').get(id).map().once((data, key) => {
             if (!data) reject(`${data} is not here.`)
-            resolve([id, data])
+            resolve([id, trimSoul(data)])
         })
     })
 }
@@ -52,7 +54,7 @@ async function getItems(id) {
     await gun.get('Items').get(id).map().on((data, key) => {
         new Promise((resolve, reject) => {
             if (!data) reject(`${data} is not here.`)
-            resolve(results.push(data))
+            resolve(results.push(trimSoul(data)))
         })
     })
     return Promise.all(results)
@@ -120,7 +122,7 @@ const getAll = async () => {
     let results = []
     let keys = await getKeys()
     if (!Array.isArray(keys)) return ('invalid keys')
-    await keys.map( key => {
+    await keys.map(key => {
         results.push(getItem(key))
     })
     return Promise.all(results)
@@ -128,21 +130,22 @@ const getAll = async () => {
 
 
 /**
- * Nullify entire Gun Store
+ * `DANGER!`
+ * Nullifies entire Item Store.
  */
-exports.removeAll = async () => {
-    return new Promise(async (resolve, reject) => {
-        await gun.get('Items').map().once(async (value, key) => {
-            return new Promise((resolve, reject) => {
-                resolve(gun.get('Item').get(key).put(null))
-            })
-        })
-    })
+const removeAll = async () => {
+    let keys = await getKeys()
+    let results = []
+    if (!Array.isArray(keys)) return ('invalid keys')
+    await keys.map(key => results.push(storeItem([key, null])))
+    return Promise.all(results)
 }
 
 module.exports = {
     getAll: getAll,
+    removeAll : removeAll,
     storeItem: storeItem,
+    removeItem : removeItem,
     getItem: getItem,
     getItems: getItems,
     getKeys: getKeys

@@ -61,9 +61,17 @@ const testRunner = async (tests) => {
 const storeItemTest = async () => dag.storeItem([key, value])
 const getItemTest = async () => dag.getItem('mOBA8B9xO')
 const getItemsTest = async () => dag.getItems('mOBA8B9xO')
+const removeItemTest = async () => dag.removeItem('mOBA8B9xO')
+const removeAllTest = async () => dag.removeAll()
 const getAllTest = async () => dag.getAll()
 const getKeysTest = async () => dag.getKeys()
 
 
 // testRunner([getKeysTest])
+// testRunner([getItemTest])
+// testRunner([removeItemTest])
+// testRunner([getItemTest])
+// testRunner([removeAllTest])
 testRunner([getAllTest])
+// testRunner([getItemsTest])
+// testRunner([storeItemTest])
