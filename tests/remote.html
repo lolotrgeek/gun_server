@@ -2,23 +2,78 @@
 
 <body>
     <div id='state'>STATE</div>
-    <button type='button' onclick="putTest()">Test!</button>
+    <!-- <button type='button' onclick="putTest()">Test!</button>
     <button type='button' onclick="testStart()">Start!</button>
-    <button type='button' onclick="testStop()">Stop!</button>
+    <button type='button' onclick="testStop()">Stop!</button> -->
+
+    <button type='button' onclick="testPut()">Put</button>
+    <button type='button' onclick="testGet()">Get</button>
+
 </body>
 <script src='../node_modules/gun/gun.js' type='text/javascript'></script>
 <script>
     const port = '8765'
-    const address = '192.168.1.109'
+    const address = 'localhost'
     const peers = [`http://${address}:${port}/gun`]
 
     const gun = new Gun({
         peers: peers,
     })
-    const putTest = () => gun.get('test').put({ remote: 'hello!' + Date.now().toString() })
-    const testStart = () => gun.get('test').get('running').put("RUNNING")
-    const testStop = () => gun.get('test').get('running').put("PAUSED")
+
     const div = document.getElementById('state');
+
+    const app = gun.get('app')
+
+    // const putTest = () => gun.get('test').put({ remote: 'hello!' + Date.now().toString() })
+    // const testStart = () => gun.get('test').get('running').put("RUNNING")
+    // const testStop = () => gun.get('test').get('running').put("PAUSED")
+
+    const testPut = () => putAll('hello/node', 'world')
+    const testGet = () => getOne('hello/node')
+
+      /**
+ * Create a chain by splitting a key string, adding each split to the chain
+ * 
+ * @param {*} input `key1\key2\...`
+ * @param {*} chain 
+ */
+  const chainer = (input, chain) => {
+    if (!input || !chain) {
+      console.log('[Chain node] no input or chain')
+      return false
+    }
+    
+    if (typeof input === 'string') {
+      if (input.length === 0) return chain
+      input = input.split('/')
+      // chainer(input, chain)
+      // if (input.length === 0) return chain
+      while (input.length > 0) {
+        console.log('[Chain node] Chaining key:', input[0])
+        chain = chain.get(input[0])
+        input = input.slice(1)
+      }
+    }
+    console.log('[Chain node] done.')
+    return chain
+  }
+
+  const putAll = (key, value) => {
+    const chain = chainer(key, app)
+    console.log('[React node] Chain :', chain) 
+    chain.put(value, ack => {
+      console.log('[GUN node] ACK: ', ack)
+    })
+  }
+
+  const getOne = (msg) => {
+    const chain = chainer(msg, app)
+    console.log('[React node] Chain :', chain)
+    chain.on((data, key) => {
+      console.log('[GUN node] Data Found: ' + data)
+      div.innerHTML = data
+    })
+  }
 
     gun.get('test').get('running').on((data, key) => {
         if (data && data === 'RUNNING') {
