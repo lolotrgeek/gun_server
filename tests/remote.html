@@ -1,57 +1,87 @@
 <html>
 
 <body>
-    <div id='state'>STATE</div>
-    <!-- <button type='button' onclick="putTest()">Test!</button>
-    <button type='button' onclick="testStart()">Start!</button>
-    <button type='button' onclick="testStop()">Stop!</button> -->
+  Running: <div id='running'></div>
+  <button type='button' onclick="testStart()">Start!</button>
+  <button type='button' onclick="testStop()">Stop!</button>
+  <hr />
+  Projects: <div id='projects'></div>
 
-    <button type='button' onclick="testPut()">Put</button>
-    <button type='button' onclick="testGet()">Get</button>
+  <!-- <button type='button' onclick="testPut()">Put</button>
+  <button type='button' onclick="testGet()">Get</button> -->
 
 </body>
 <script src='../node_modules/gun/gun.js' type='text/javascript'></script>
 <script>
-    const port = '8765'
-    const address = 'localhost'
-    const peers = [`http://${address}:${port}/gun`]
+  const port = '8765'
+  const address = 'localhost'
+  const peers = [`http://${address}:${port}/gun`]
 
-    const gun = new Gun({
-        peers: peers,
-    })
+  const gun = new Gun({
+    peers: peers,
+  })
 
-    const div = document.getElementById('state');
 
-    const app = gun.get('app')
+  let projects = []
+  let running = { id: 'none' }
 
-    // const putTest = () => gun.get('test').put({ remote: 'hello!' + Date.now().toString() })
-    // const testStart = () => gun.get('test').get('running').put("RUNNING")
-    // const testStop = () => gun.get('test').get('running').put("PAUSED")
+  const app = gun.get('app')
 
-    const testPut = () => putAll('hello/node', 'world')
-    const testGet = () => getOne('hello/node')
+  const testStart = () => {
+    finishTimer(running)
+    createTimer(projects[0].id)
+    getRunning()
+  }
+  const testStop = () => {
+    finishTimer(running)
+    getRunning()
+  }
 
-      /**
- * Create a chain by splitting a key string, adding each split to the chain
- * 
- * @param {*} input `key1\key2\...`
- * @param {*} chain 
- */
+  const incomingProjects = item => {
+    debug && console.log('[react] successful get.')
+    debug && console.log('get ' + typeof item + ' ', item)
+    if (typeof item === 'object') {
+      for (id in item) {
+        try {
+          if (typeof item[id] === 'string') {
+            let value = JSON.parse(item[id])
+            console.log(`item ${typeof value}`, value)
+            if (value.type === 'project') {
+              document.getElementById('projects').innerHTML = value.id + '| '
+              let alreadyInProjects = projects.some(project => project.id === value.id)
+              if (!alreadyInProjects) {
+                projects = [...projects, value]
+              }
+            }
+          }
+        } catch (error) {
+          console.log(error)
+        }
+      }
+    }
+  }
+
+  /**
+* Create a chain by splitting a key string, adding each split to the chain
+* 
+* @param {*} input `key1\key2\...`
+* @param {*} chain 
+*/
   const chainer = (input, chain) => {
     if (!input || !chain) {
       console.log('[Chain node] no input or chain')
       return false
     }
-    
+
     if (typeof input === 'string') {
       if (input.length === 0) return chain
-      input = input.split('/')
+      inputKeys = input.split('/')
       // chainer(input, chain)
       // if (input.length === 0) return chain
-      while (input.length > 0) {
-        console.log('[Chain node] Chaining key:', input[0])
-        chain = chain.get(input[0])
-        input = input.slice(1)
+      while (inputKeys.length > 0) {
+        console.log('[Chain node] Chaining key:', inputKeys[0])
+        chain = chain.get(inputKeys[0])
+        inputKeys = inputKeys.slice(1)
       }
     }
     console.log('[Chain node] done.')
@@ -60,28 +90,90 @@
 
   const putAll = (key, value) => {
     const chain = chainer(key, app)
-    console.log('[React node] Chain :', chain) 
+    console.log('[React node] Chain :', chain)
     chain.put(value, ack => {
       console.log('[GUN node] ACK: ', ack)
     })
   }
 
-  const getOne = (msg) => {
-    const chain = chainer(msg, app)
+  const getProjects = () => {
+    const chain = chainer('projects', app)
     console.log('[React node] Chain :', chain)
-    chain.on((data, key) => {
+    chain.once((data, key) => {
       console.log('[GUN node] Data Found: ' + data)
-      div.innerHTML = data
+      incomingProjects(data)
+    })
+  }
+  const getRunning = () => {
+    const chain = chainer('running', app)
+    console.log('[React node] Chain :', chain)
+    chain.once((data, key) => {
+      console.log('[GUN node] Data Found: ', data)
+      running = data
+      document.getElementById('running').innerHTML = data
     })
   }
 
-    gun.get('test').get('running').on((data, key) => {
-        if (data && data === 'RUNNING') {
-            div.innerHTML = 'RUNNING'
-        } else {
-            div.innerHTML = 'STOPPED'
-        }
-    })
+
+  const newTimer = projectId => {
+    const key = 'remoteTest' + Date.now().toString()
+    const start = new Date().toString()
+    const timer = {
+      id: key,
+      created: start,
+      started: start,
+      ended: '',
+      type: 'timer',
+      project: projectId,
+      status: 'running',
+      edited: '',
+      total: 0,
+      mood: 'good',
+      energy: 50,
+    }
+    return timer
+  }
+  const debug = true
+  const createTimer = (projectId) => {
+    if (!projectId || typeof projectId !== 'string' || projectId.length < 9) return false
+    debug && console.log('Creating Timer', projectId)
+    let timer = newTimer(projectId)
+    timer = JSON.stringify(timer)
+    debug && console.log('Created Timer', timer)
+    putAll('running', timer)
+    debug && console.log('Success! Created Timer.')
+    return timer
+  }
+
+  doneTimer = (timer) => {
+    const done = timer
+    done.ended = new Date().toString()
+    done.status = 'done'
+    return done
+  }
+  const endTimer = (timer) => {
+    debug && console.log('Ending', timer)
+    timer = JSON.stringify(timer)
+    putAll(`timers/${timer.project}/${timer.id}`, timer)
+    // organizing...
+    // put(`${timer.project}/timers`, timer.id)
+  }
+
+  const isRunning = timer => timer && typeof timer === 'object' && timer.status === 'running' ? true : false
+
+  const finishTimer = (timer) => {
+    if (isRunning(timer)) {
+      debug && console.log('Finishing ', timer)
+      let done = doneTimer(timer)
+      putAll('running ', done)
+      endTimer(done)
+
+    } else { return timer }
+  }
+
+  getProjects()
+  getRunning()
+
 </script>
 
 </html>
