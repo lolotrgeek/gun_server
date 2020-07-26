@@ -7,7 +7,7 @@
 	const fs = require('fs');
 	const config = {
 		port: process.env.PORT || 8765,
-		host: 'localhost'
+		host: '0.0.0.0'
 	};
 	const Gun = require('gun')
 	const GunSQLite = require('gun-sqlite');
