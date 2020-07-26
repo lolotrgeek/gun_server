@@ -7,7 +7,7 @@
 	const fs = require('fs');
 	const config = {
 		port: process.env.OPENSHIFT_NODEJS_PORT || process.env.VCAP_APP_PORT || process.env.PORT || process.argv[2] || 8765,
-		host: '192.168.1.109'
+		host: 'https://tabsync.herokuapp.com/'
 	};
 	const Gun = require('gun')
 	const GunSQLite = require('gun-sqlite');
