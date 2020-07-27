@@ -23,18 +23,5 @@
 	const gun = Gun({ web: config.server.listen(config.port, config.host) })
 	console.log('Relay peer started on port ' + config.port + ' with /gun')
 
-	// ;(function () {
-	// 	setInterval(() => {
-	// 		let peers = gun.back('opt.peers')
-	// 		console.log(peers)
-	// 	}, 3000)
-	// })();
-	
-	gun.get('tabs').on((data, key) => {
-		let peers = gun.back('opt.peers')
-		console.log(peers)
-	})
-
-
 	module.exports = gun
 }());
