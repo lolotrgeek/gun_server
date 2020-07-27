@@ -34,5 +34,12 @@
 	});
 	console.log('Relay peer started on port ' + config.port + ' with /gun');
 
+	(function () {
+		setInterval(() => {
+			let peers = gun.back('opt.peers')
+			console.log(peers)
+		}, 7000)
+	})();
+	
 	module.exports = gun;
 }());
