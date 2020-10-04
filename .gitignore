@@ -3,3 +3,6 @@
 /.history
 /logs
 /GunDB.db
+*.log
+data/!
+data/%1C

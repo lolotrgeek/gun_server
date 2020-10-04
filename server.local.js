@@ -7,7 +7,7 @@
 	const fs = require('fs')
 	const config = {
 		port: process.env.PORT || 8765,
-		host: '0.0.0.0'
+		host: '192.168.1.109'
 	};
 	const Gun = require('gun')
 
@@ -20,7 +20,7 @@
 	}
 
 	console.log('GUN config ', config)
-	const gun = Gun({ web: config.server.listen(config.port, config.host) })
+	const gun = Gun({ web: config.server.listen(config.port) })
 	console.log(`Relay peer started on ${config.host}:${config.port}/gun`)
 
 	// gun.get('server').get('status').put('online')
