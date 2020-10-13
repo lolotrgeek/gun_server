@@ -4,7 +4,7 @@ const gun = Gun()
 const fs = require("fs")
 const process = require("process")
 
-const debug = false
+const debug = true
 
 /**
  * Load a web instance, dump localstorage, then save it as JSON
@@ -17,7 +17,7 @@ const webExport = () => {
  * @param {*} data 
  */
 const levelExport = () => {
-  
+
 }
 /**
  * removes soul from given data
@@ -43,7 +43,7 @@ function printLast(last) {
     process.stdout.cursorTo(1);
     process.stdout.write(last.toString());
 }
-const runChain = ({ data, key, final, count }, callback) => {
+const runChainFull = ({ data, key, final, count }, callback) => {
     if (!key || !callback) return false
     count++
     if (!data) {
@@ -55,12 +55,12 @@ const runChain = ({ data, key, final, count }, callback) => {
             runChain({ data: next, key: keychain, final, count }, callback)
         })
     }
-    else if(data) {
+    else if (data) {
         let last
         // key + datum
         for (datum in data) {
             if (datum && data[datum]) {
-                let keyset = data[datum]['#'] // okay, these need to be mapped.
+                let keyset = data[datum]['#'] // '#' means this is a key and needs to be mapped.
                 if (keyset && key !== last) {
                     let chain = keyset
                     last = chain
@@ -89,13 +89,45 @@ const runChain = ({ data, key, final, count }, callback) => {
     }
 
 }
+
+const runChain = (key, final) => {
+    if (!key) return false
+    // debug && console.log('Getting Key: ', key)
+    let end = false
+    gun.get(key).once((next, nextkey) => {
+        if (!next) {
+            debug && console.log('No Next: ', next)
+            return false
+        }
+        next = trimSoul(next)
+        debug && console.log('Moving Down Chain:', next)
+        Object.values(next).map(value => {
+            if (value && value['#'] && typeof value['#'] === 'string') {
+                debug && console.log('Getting Next: ', nextkey)
+                runChain(value['#'], final)
+            } else {
+                end = true
+            }
+        })
+        if (key && end === true) {
+            debug && console.log('End of Chain:', next)
+            let input = {}
+            input[key] = next
+            final.push(input)
+            debug && console.log('Progress: ', final)
+        }
+    })
+
+}
+
 /**
  * Convert radata into JSON and save it
  */
 const Export = () => {
     const done = []
     let count = 0
-    runChain({ key: 'app', final: done, count }, output => saveFile(output))
+    // runChainFull({ key: 'app', final: done, count }, output => saveFile(output))
+    runChain('app', done)
 }
 Export()
 
