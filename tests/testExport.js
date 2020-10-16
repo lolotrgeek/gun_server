@@ -3,7 +3,7 @@ const deepEqual = require('deep-equal')
 const sortKeys = require('sort-keys')
 const process = require("process")
 const truth = require('./testdata.json')
-const exported = require('../1602869511144.json')
+const exported = require('../1602878186623.json')
 /**
  * removes soul from given data
  * @param {*} data 
@@ -131,6 +131,10 @@ const testExport = (truth, exported) => {
 
 let run = testExport(truth, exported)
 console.log("Diffs? ", run)
-if(run.length > 0) {
+
+if(!run) {
+    console.error('PASSED.')
+}
+else if(run.length > 0) {
     console.error('FAILED.')
 }
