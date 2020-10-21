@@ -3,7 +3,7 @@ const deepEqual = require('deep-equal')
 const sortKeys = require('sort-keys')
 const process = require("process")
 const truth = require('./testdata.json')
-const exported = require('../1602878186623.json')
+const exported = require('../exported.json')
 /**
  * removes soul from given data
  * @param {*} data 
