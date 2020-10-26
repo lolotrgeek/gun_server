@@ -23288,35 +23288,6 @@
         "color": "#ff5722",
         "count": 0
     },
-    "app/date/projects/10-01-2020/57nX6nPVR": {
-        "_": {
-            "#": "app/date/projects/10-01-2020/57nX6nPVR",
-            ">": {
-                "id": 1601564022511,
-                "created": 1601564022511,
-                "type": 1601564022511,
-                "status": 1601564022511,
-                "name": 1601564022511,
-                "color": 1601564022511,
-                "selected": 1601564022511,
-                "edited": 1601564022511,
-                "lastcount": 1601564022511,
-                "lastrun": 1601564022511,
-                "deleted": 1601564022511
-            }
-        },
-        "id": "57nX6nPVR",
-        "created": "Tue Sep 15 2020 05:53:09 GMT-0500 (Central Daylight Time)",
-        "type": "project",
-        "status": "active",
-        "name": "Testing",
-        "color": "#ff5722",
-        "selected": 15,
-        "edited": "",
-        "lastcount": 49,
-        "lastrun": "10-01-2020",
-        "deleted": "Wed Sep 30 2020 09:06:54 GMT-0500 (Central Daylight Time)"
-    },
     "app/date/projects/10-01-2020": {
         "_": {
             "#": "app/date/projects/10-01-2020",
