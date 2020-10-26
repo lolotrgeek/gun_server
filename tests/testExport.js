@@ -1,5 +1,7 @@
 const fs = require("fs")
 const deepEqual = require('deep-equal')
+const {diff} = require('deep-diff')
+const assert = require('assert')
 const sortKeys = require('sort-keys')
 const process = require("process")
 const truth = require('./testdata.json')
@@ -119,22 +121,28 @@ const clean = data => {
     }
     return cleandata
 }
-
+// TODO:
+// start a new node
+// clear any radata, then import testdata.json
+// then run export
+// then run testExport
 const testExport = (truth, exported) => {
     exported = clean(exported)
     console.log(typeof exported)
     truth = clean(truth)
     console.log(typeof truth)
+    // return diff(exported, truth)
     // return deepEqual(exported, truth)
     return DiffObjects(truth, exported)
 }
 
 let run = testExport(truth, exported)
-console.log("Diffs? ", run)
 
 if(!run) {
+    console.log("Diffs? ", 'none')
     console.error('PASSED.')
 }
 else if(run.length > 0) {
+    console.log("Diffs? ", run)
     console.error('FAILED.')
 }
